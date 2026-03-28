@@ -1,7 +1,7 @@
 {
-  "name": "node-express-typescript-starter-2022",
+  "name": "fitzenix",
   "version": "1.0.1",
-  "description": "A minimally opinionated typescript & express starter for 2023",
+  "description": "Fitzenix is a modern, cloud-based SaaS platform that helps gyms manage memberships, trainers, and subscriptions with a scalable multi-tenant architecture.",
   "author": "Carter Adams <carteradams@gmail.com>",
   "license": "MIT-0",
   "private": false,
