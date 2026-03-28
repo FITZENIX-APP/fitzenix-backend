@@ -1,10 +1,13 @@
 import { Router } from 'express'
+import { requireApiHeaders } from '../../middleware/apiHeaders'
 import authRoutes from './auth.routes'
 import ownerRoutes from './owner.routes'
 import memberRoutes from './member.routes'
 import adminRoutes from './admin.routes'
 
 const v1 = Router()
+
+v1.use(requireApiHeaders)
 
 v1.use('/auth', authRoutes)
 v1.use('/owner', ownerRoutes)

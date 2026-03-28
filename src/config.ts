@@ -42,6 +42,29 @@ const config = {
         resendApiKey: process.env['RESEND_API_KEY'] ?? '',
         from: process.env['EMAIL_FROM'] ?? 'Gym App <no-reply@example.com>',
     },
+
+    /**
+     * Google OAuth: comma-separated OAuth 2.0 client IDs (Web / iOS / Android) used to verify `idToken`
+     * from mobile or web clients. See https://developers.google.com/identity/sign-in/web/backend-auth
+     */
+    googleOAuthClientIds: (process.env['GOOGLE_OAUTH_CLIENT_IDS'] ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+
+    /** Facebook Graph API app id (optional; used when verifying access tokens). */
+    facebookAppId: process.env['FACEBOOK_APP_ID'] ?? '',
+
+    /** When both are non-empty, all /api/v1 routes require matching `x-api-key` and `api-token` headers. */
+    apiHeaders: (() => {
+        const key = process.env['API_KEY'] ?? ''
+        const token = process.env['API_TOKEN'] ?? ''
+        return {
+            key,
+            token,
+            enabled: Boolean(key && token),
+        }
+    })(),
 }
 
 export default config

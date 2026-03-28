@@ -2,6 +2,8 @@ import { Router } from 'express'
 import {
   postRegisterOwner,
   postLogin,
+  postRegisterGymOwnerOAuth,
+  postLoginOAuth,
   postRegisterMemberUser,
   postRegisterTrainer,
   postRegisterSuperAdmin,
@@ -16,6 +18,8 @@ import { UserRole } from '../../types/roles'
 import {
   registerOwnerSchema,
   loginSchema,
+  oauthLoginSchema,
+  oauthRegisterGymOwnerSchema,
   registerMemberUserSchema,
   registerTrainerSchema,
   registerSuperAdminSchema,
@@ -26,7 +30,13 @@ import {
 const r = Router()
 
 r.post('/register/gym-owner', validateBody(registerOwnerSchema), postRegisterOwner)
+r.post(
+  '/register/gym-owner/oauth',
+  validateBody(oauthRegisterGymOwnerSchema),
+  postRegisterGymOwnerOAuth
+)
 r.post('/login', validateBody(loginSchema), postLogin)
+r.post('/login/oauth', validateBody(oauthLoginSchema), postLoginOAuth)
 r.post(
   '/register/member',
   validateBody(registerMemberUserSchema),

@@ -2,7 +2,10 @@ import mongoose from 'mongoose'
 import Gym from '../models/Gym'
 import Member from '../models/Member'
 import User from '../models/user'
+import type { GymAddress } from '../types/gym'
+import type { GymBillingPlan } from '../types/gym'
 import { AppError } from '../utils/AppError'
+import { defaultGymBillingPlans, mergeGymPlans } from '../utils/gymPlans'
 import { slugify } from '../utils/slug'
 
 export async function getGymForOwner(ownerId: string) {
@@ -13,7 +16,16 @@ export async function getGymForOwner(ownerId: string) {
 
 export async function updateGymForOwner(
   ownerId: string,
-  input: Partial<{ name: string; type: 'CARDIO' | 'NORMAL' | 'MIXED'; address: string; phone: string }>
+  input: Partial<{
+    name: string
+    type: 'MEN' | 'WOMEN' | 'MIXED'
+    address: Partial<GymAddress>
+    phone: string
+    contactEmail: string
+    gstin: string
+    imageUrls: string[]
+    plans: Partial<GymBillingPlan>[]
+  }>
 ) {
   const gym = await Gym.findOne({ ownerId: new mongoose.Types.ObjectId(ownerId) })
   if (!gym) throw new AppError('Gym not found', 404)
@@ -29,8 +41,32 @@ export async function updateGymForOwner(
     gym.slug = slug
   }
   if (input.type) gym.type = input.type
-  if (input.address !== undefined) gym.address = input.address
+  if (input.address !== undefined) {
+    const cur = gym.address ? { ...gym.address } : {}
+    Object.assign(cur, input.address)
+    gym.address = cur as GymAddress
+  }
   if (input.phone !== undefined) gym.phone = input.phone
+  if (input.contactEmail !== undefined) gym.contactEmail = input.contactEmail
+  if (input.gstin !== undefined) gym.gstin = input.gstin
+  if (input.imageUrls !== undefined) gym.imageUrls = input.imageUrls
+  if (input.plans !== undefined) {
+    const base: GymBillingPlan[] =
+      gym.plans?.length
+        ? gym.plans.map((p) => ({
+            billingPeriod: p.billingPeriod as GymBillingPlan['billingPeriod'],
+            enabled: p.enabled,
+            price: p.price,
+            workoutsIncluded: {
+              cardio: Boolean(p.workoutsIncluded?.cardio),
+              weightLoss: Boolean(p.workoutsIncluded?.weightLoss),
+              weightGain: Boolean(p.workoutsIncluded?.weightGain),
+              normal: Boolean(p.workoutsIncluded?.normal),
+            },
+          }))
+        : defaultGymBillingPlans()
+    gym.plans = mergeGymPlans(base, input.plans)
+  }
 
   await gym.save()
   return gym.toObject()

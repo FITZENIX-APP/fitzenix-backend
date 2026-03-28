@@ -2,7 +2,9 @@ import { RequestHandler } from 'express'
 import config from '../config'
 import {
   login,
+  loginOAuth,
   registerGymOwner,
+  registerGymOwnerOAuth,
   registerMemberUser,
   registerSuperAdmin,
   registerTrainer,
@@ -20,6 +22,16 @@ export const postRegisterOwner: RequestHandler = asyncHandler(async (req, res) =
 
 export const postLogin: RequestHandler = asyncHandler(async (req, res) => {
   const out = await login(req.body)
+  res.json(out)
+})
+
+export const postRegisterGymOwnerOAuth: RequestHandler = asyncHandler(async (req, res) => {
+  const out = await registerGymOwnerOAuth(req.body)
+  res.status(201).json(out)
+})
+
+export const postLoginOAuth: RequestHandler = asyncHandler(async (req, res) => {
+  const out = await loginOAuth(req.body)
   res.json(out)
 })
 

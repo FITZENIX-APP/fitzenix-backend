@@ -6,11 +6,3 @@ export const UserRole = {
 } as const
 
 export type UserRoleType = (typeof UserRole)[keyof typeof UserRole]
-
-export const GymType = {
-  CARDIO: 'CARDIO',
-  NORMAL: 'NORMAL',
-  MIXED: 'MIXED',
-} as const
-
-export type GymTypeValue = (typeof GymType)[keyof typeof GymType]

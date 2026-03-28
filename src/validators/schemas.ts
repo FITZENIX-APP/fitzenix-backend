@@ -1,15 +1,48 @@
 import { z } from 'zod'
 
-const gymTypeEnum = z.enum(['CARDIO', 'NORMAL', 'MIXED'])
+const gymAudienceEnum = z.enum(['MEN', 'WOMEN', 'MIXED'])
 
-export const registerOwnerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  gymName: z.string().min(2),
-  gymType: gymTypeEnum,
-  address: z.string().optional(),
-  phone: z.string().optional(),
+export const addressSchema = z.object({
+  line1: z.string().min(1),
+  line2: z.string().optional(),
+  city: z.string().min(1),
+  state: z.string().min(1),
+  postalCode: z.string().min(1),
+  country: z.string().min(1),
 })
+
+const gymPlanRowSchema = z.object({
+  billingPeriod: z.enum(['MONTHLY', 'QUARTERLY', 'HALF_YEARLY', 'YEARLY']),
+  enabled: z.boolean().optional(),
+  price: z.number().min(0).optional(),
+  workoutsIncluded: z
+    .object({
+      cardio: z.boolean().optional(),
+      weightLoss: z.boolean().optional(),
+      weightGain: z.boolean().optional(),
+      normal: z.boolean().optional(),
+    })
+    .optional(),
+})
+
+/** Shared gym profile for owner registration (password or OAuth). */
+export const gymRegistrationBodySchema = z.object({
+  gymName: z.string().min(2),
+  gymType: gymAudienceEnum,
+  address: addressSchema,
+  phone: z.string().min(1),
+  contactEmail: z.string().email(),
+  gstin: z.string().optional(),
+  imageUrls: z.array(z.string().min(1)).max(10).optional(),
+  plans: z.array(gymPlanRowSchema).optional(),
+})
+
+export const registerOwnerSchema = z
+  .object({
+    email: z.string().email(),
+    password: z.string().min(8),
+  })
+  .merge(gymRegistrationBodySchema)
 
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -45,10 +78,37 @@ export const resendEmailOtpSchema = z.object({
 
 export const updateGymSchema = z.object({
   name: z.string().min(2).optional(),
-  type: gymTypeEnum.optional(),
-  address: z.string().optional(),
+  type: gymAudienceEnum.optional(),
+  address: addressSchema.partial().optional(),
   phone: z.string().optional(),
+  contactEmail: z.string().email().optional(),
+  gstin: z.string().optional(),
+  imageUrls: z.array(z.string().min(1)).max(10).optional(),
+  plans: z.array(gymPlanRowSchema).optional(),
 })
+
+export const oauthRegisterGymOwnerSchema = z
+  .object({
+    provider: z.enum(['google', 'facebook']),
+    idToken: z.string().optional(),
+    accessToken: z.string().optional(),
+  })
+  .merge(gymRegistrationBodySchema)
+  .refine(
+    (d) => (d.provider === 'google' ? Boolean(d.idToken) : Boolean(d.accessToken)),
+    { message: 'Google requires idToken; Facebook requires accessToken' }
+  )
+
+export const oauthLoginSchema = z
+  .object({
+    provider: z.enum(['google', 'facebook']),
+    idToken: z.string().optional(),
+    accessToken: z.string().optional(),
+  })
+  .refine(
+    (d) => (d.provider === 'google' ? Boolean(d.idToken) : Boolean(d.accessToken)),
+    { message: 'Google requires idToken; Facebook requires accessToken' }
+  )
 
 export const createMemberSchema = z.object({
   uniqueMemberId: z.string().min(1),
