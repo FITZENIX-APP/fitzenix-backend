@@ -90,6 +90,8 @@ export const registerMemberUserSchema = z.object({
 export const registerTrainerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+  /** Required when the caller is SUPER_ADMIN; ignored for GYM_OWNER (JWT gym is used). */
+  gymId: z.string().min(1).optional(),
 })
 
 export const registerSuperAdminSchema = z.object({

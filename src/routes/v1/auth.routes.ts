@@ -53,7 +53,7 @@ r.post('/resend-email-otp', validateBody(resendEmailOtpSchema), postResendEmailO
 r.post(
   '/register/trainer',
   requireAuth,
-  requireRoles(UserRole.GYM_OWNER),
+  requireRoles(UserRole.GYM_OWNER, UserRole.SUPER_ADMIN),
   validateBody(registerTrainerSchema),
   postRegisterTrainer
 )

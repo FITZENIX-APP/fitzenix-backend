@@ -12,6 +12,8 @@ import {
   verifyEmailOtp,
   resendEmailOtp,
 } from '../services/auth.service'
+import Gym from '../models/Gym'
+import { UserRole } from '../types/roles'
 import { asyncHandler } from '../utils/asyncHandler'
 import { AppError } from '../utils/AppError'
 
@@ -41,11 +43,41 @@ export const postRegisterMemberUser: RequestHandler = asyncHandler(async (req, r
 })
 
 export const postRegisterTrainer: RequestHandler = asyncHandler(async (req, res) => {
-  if (!req.user?.gymId || !req.user.sub) throw new AppError('Unauthorized', 401)
+  if (!req.user?.sub) throw new AppError('Unauthorized', 401)
+
+  let gymId: string
+  let ownerUserId: string
+
+  if (req.user.role === UserRole.SUPER_ADMIN) {
+    const gid = req.body.gymId
+    if (!gid || typeof gid !== 'string') {
+      throw new AppError(
+        'gymId is required in the JSON body when registering a trainer as super admin',
+        400
+      )
+    }
+    const gym = await Gym.findById(gid).lean()
+    if (!gym) throw new AppError('Gym not found', 404)
+    gymId = String(gym._id)
+    ownerUserId = String(gym.ownerId)
+  } else if (req.user.role === UserRole.GYM_OWNER) {
+    if (!req.user.gymId) {
+      throw new AppError(
+        'Your gym owner account is not linked to a gym. Complete registration or contact support.',
+        403
+      )
+    }
+    gymId = req.user.gymId
+    ownerUserId = req.user.sub
+  } else {
+    throw new AppError('Forbidden', 403)
+  }
+
   const out = await registerTrainer({
-    ...req.body,
-    gymId: req.user.gymId,
-    ownerUserId: req.user.sub,
+    email: req.body.email,
+    password: req.body.password,
+    gymId,
+    ownerUserId,
   })
   res.status(201).json(out)
 })

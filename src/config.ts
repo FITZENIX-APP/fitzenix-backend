@@ -13,7 +13,8 @@ const config = {
     port: Number(process.env['PORT'] ?? 3000),
 
     jwt: {
-        secret: process.env['JWT_SECRET'] ?? 'dev-only-change-me',
+        /** Trim avoids signature mismatch when .env has accidental spaces/newlines. */
+        secret: (process.env['JWT_SECRET'] ?? 'dev-only-change-me').trim(),
         expiresIn: process.env['JWT_EXPIRES_IN'] ?? '7d',
     },
 
