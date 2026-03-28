@@ -25,15 +25,47 @@ const gymPlanRowSchema = z.object({
     .optional(),
 })
 
+const optionalNonEmptyString = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+  z.string().min(1).optional()
+)
+
+const optionalImageUrls = z.preprocess((val) => {
+  if (val === undefined || val === null) return undefined
+  if (!Array.isArray(val)) return val
+  return val.filter((s: unknown) => typeof s === 'string' && s.trim().length > 0)
+}, z.array(z.string().min(1)).max(10).optional())
+
+/**
+ * Clients often send `address: {}` or all empty strings; treat that as "no address"
+ * so inner fields are not validated as mandatory.
+ */
+function addressPayloadToUndefinedIfEmpty(val: unknown): unknown {
+  if (val === undefined || val === null) return undefined
+  if (typeof val !== 'object' || Array.isArray(val)) return val
+  const o = val as Record<string, unknown>
+  const keys = ['line1', 'line2', 'city', 'state', 'postalCode', 'country'] as const
+  const hasNonEmpty = keys.some((k) => {
+    const v = o[k]
+    return typeof v === 'string' && v.trim().length > 0
+  })
+  return hasNonEmpty ? val : undefined
+}
+
+const optionalAddressForRegistration = z.preprocess(
+  addressPayloadToUndefinedIfEmpty,
+  addressSchema.optional()
+)
+
 /** Shared gym profile for owner registration (password or OAuth). */
 export const gymRegistrationBodySchema = z.object({
   gymName: z.string().min(2),
   gymType: gymAudienceEnum,
-  address: addressSchema,
-  phone: z.string().min(1),
+  address: optionalAddressForRegistration,
+  phone: optionalNonEmptyString,
   contactEmail: z.string().email(),
   gstin: z.string().optional(),
-  imageUrls: z.array(z.string().min(1)).max(10).optional(),
+  imageUrls: optionalImageUrls,
   plans: z.array(gymPlanRowSchema).optional(),
 })
 

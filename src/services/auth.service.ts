@@ -50,8 +50,8 @@ async function createGymForOwner(
   input: {
     gymName: string
     gymType: 'MEN' | 'WOMEN' | 'MIXED'
-    address: GymAddress
-    phone: string
+    address?: GymAddress
+    phone?: string
     contactEmail: string
     gstin?: string
     imageUrls?: string[]
@@ -72,8 +72,8 @@ async function createGymForOwner(
     name: input.gymName,
     slug,
     type: input.gymType,
-    address: input.address,
-    phone: input.phone,
+    ...(input.address !== undefined ? { address: input.address } : {}),
+    ...(input.phone !== undefined ? { phone: input.phone } : {}),
     contactEmail: input.contactEmail,
     gstin: input.gstin,
     imageUrls: input.imageUrls ?? [],
@@ -86,8 +86,8 @@ export async function registerGymOwner(input: {
   password: string
   gymName: string
   gymType: 'MEN' | 'WOMEN' | 'MIXED'
-  address: GymAddress
-  phone: string
+  address?: GymAddress
+  phone?: string
   contactEmail: string
   gstin?: string
   imageUrls?: string[]
@@ -135,8 +135,8 @@ export async function registerGymOwnerOAuth(input: {
   accessToken?: string
   gymName: string
   gymType: 'MEN' | 'WOMEN' | 'MIXED'
-  address: GymAddress
-  phone: string
+  address?: GymAddress
+  phone?: string
   contactEmail: string
   gstin?: string
   imageUrls?: string[]
@@ -330,12 +330,6 @@ export async function login(input: { email: string; password: string }) {
   if (!user || !user.isActive) {
     throw new AppError('Invalid credentials', 401)
   }
-  if (!user.isVerified) {
-    throw new AppError(
-      'Email not verified. Please verify OTP before login.',
-      403
-    )
-  }
 
   if (!user.passwordHash) {
     throw new AppError(
@@ -344,8 +338,17 @@ export async function login(input: { email: string; password: string }) {
     )
   }
 
-  const ok = await bcrypt.compare(input.password, user.passwordHash)
-  if (!ok) throw new AppError('Invalid credentials', 401)
+  const passwordOk = await bcrypt.compare(input.password, user.passwordHash)
+  if (!passwordOk) {
+    throw new AppError('Invalid credentials', 401)
+  }
+
+  if (!user.isVerified) {
+    throw new AppError(
+      'Please verify your account using the OTP sent to your email before logging in.',
+      403
+    )
+  }
 
   const token = issueTokenForUser(user)
 
